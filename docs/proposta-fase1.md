@@ -1,76 +1,88 @@
-# Proposta do Projeto — Fase 1 (Submissão da Ideia)
+# Proposta — Fase 1 (Submissão da Ideia)
 
-> Texto preparado para preenchimento e envio no formulário da **Fase 1 (26/10)**.
+> **Resumo Pronto para o Formulário (1 Parágrafo):**
+> O **SynthMIPS** é um mini-estúdio musical interativo e sequenciador dinâmico desenvolvido em Assembly MIPS para o simulador MARS 4.5 pelo grupo composto por Breno Porto Pinheiro do Prado, Felipe Pereira Silva, Guilherme Bento Ramos, José Rubens Freitas Pinheiro e Luis Fernando Giaquinto Zólio. O diferencial central da arquitetura é que a composição não tem tamanho fixo nem limite pré-configurado: o vetor da melodia reside na memória *Heap* (`0x10040000`) e cresce nota a nota sob demanda via chamada de sistema `syscall 9` (*sbrk*), permitindo compor continuamente melodias de tamanho livre com suporte a edição pontual (`1..N`), desfazer (*Undo*) e limpeza (`N = 0`). O programa integra reprodução sonora em **Modo Loop** (`K` ciclos consecutivos) através do sintetizador MIDI nativo (`syscall 33` e `syscall 32`) com barras visuais de equalizador ASCII no console, além de um **Modo Teclado Livre ergonômico** mapeado na fileira central (`A S D F G H J K` para Dó a Dó agudo e `-` para pausa). Conta ainda com seleção de 5 timbres MIDI, 3 andamentos rítmicos (BPM), carregamento de demos prontas e efeitos algorítmicos aplicados sobre as `N` notas da *Heap* (transposição com saturação entre `36..96` e proteção de pausas, além de inversão *Reverse* *in-place*), cumprindo com rigor todos os requisitos de procedimentos modulares, convenções e uso justificado da pilha (`$sp`), alocação dinâmica e tratamento de exceções.
 
 ---
 
-## 1. Nome Provisório, Grupo e Integrantes
+## 1. Identificação do Projeto e do Grupo
 
-- **Nome provisório do produto:** TerMIPS
-- **Integrantes:**
-  - Breno Porto Pinheiro do Prado
-  - Felipe Pereira Silva
-  - Guilherme Bento Ramos
-  - José Rubens Freitas Pinheiro
-  - Luis Fernando Giaquinto Zólio
+- **Nome provisório do produto:** **SynthMIPS** — Mini-Estúdio Musical e Sequenciador Dinâmico em Assembly MIPS
+- **Disciplina:** Arquitetura e Organização de Computadores — Profa. Denise Stringhini (ICT Unifesp)
+- **Integrantes do Grupo:**
+  1. Breno Porto Pinheiro do Prado
+  2. Felipe Pereira Silva
+  3. Guilherme Bento Ramos
+  4. José Rubens Freitas Pinheiro
+  5. Luis Fernando Giaquinto Zólio
+- **Link do Repositório no GitHub:** *(inserir URL do repositório GitHub do grupo antes do envio)*
 
 ---
 
 ## 2. Objetivo, Público Previsto e Interação Principal
 
-- **Objetivo:** Desenvolver o **TerMIPS**, um jogo de adivinhação de palavras no estilo *Termo / Wordle* em Assembly MIPS executado no MARS. O objetivo do jogador é descobrir uma palavra secreta de 5 letras em até 6 tentativas utilizando as pistas exibidas após cada jogada.
-- **Público previsto:** Estudantes, professora e monitores de Arquitetura e Organização de Computadores (ICT-Unifesp), além de usuários interessados em jogos rápidos de raciocínio lógico e palavras no terminal.
-- **Interação principal:** Ao iniciar o programa, o usuário encontra um menu principal com três opções: **Jogar** (`1`), **Tutorial** (`2`, que exibe um texto explicativo de como o jogo e os símbolos de dica funcionam) e **Sair** (`0`). Ao iniciar uma partida, o programa sorteia uma palavra secreta e, a cada rodada, o jogador digita um palpite de 5 letras pelo teclado. O programa valida a entrada, mostra o histórico de todas as tentativas já feitas na partida indicando letras na posição exata, letras em outra posição e letras ausentes, e segue até a vitória ou o fim das 6 tentativas (revelando a palavra secreta ao final).
+- **Objetivo:** Demonstrar como conceitos avançados de arquitetura de computadores — como gerenciamento dinâmico de memória *Heap* (`syscall 9`), endereçamento indexado de vetores, laços aninhados de repetição, manipulação de strings, convenções de chamadas de procedimentos e preservação rigorosa da pilha (`$sp`) — viabilizam um estúdio musical dinâmico e funcional dentro do simulador MARS.
+- **Público Previsto:** Estudantes de computação, entusiastas de música computacional e avaliadores acadêmicos que queiram experimentar composição interativa direta em Assembly sem exigir conhecimentos prévios de numeração MIDI.
+- **Descrição da Interação Principal:**
+  A cada ciclo do laço principal, o painel do **SynthMIPS** exibe o instrumento MIDI selecionado, o andamento (ms/BPM), a contagem atual de notas alocadas na *Heap* (`N = tam_sequencia`) e a sequência completa traduzida para cifras musicais (`DO, RE, MI, FA, SOL, LA, SI, DO+, ---` ou `#num` para notas transpostas). O usuário navega por um menu de opções (`1..6` e `0` para sair), podendo adicionar notas continuamente com crescimento sob demanda da *Heap*, tocar a faixa 1 vez ou em **Modo Loop** com equalizador ASCII visual, configurar timbres/andamentos e aplicar efeitos algorítmicos sobre a melodia.
 
 ---
 
 ## 3. Entradas, Processamento, Saídas e Exemplo de Uso
 
-- **Entradas:** Escolha de opção no menu inicial (`1` para jogar, `2` para ler o tutorial, `0` para sair) e palavras de 5 letras digitadas no console a cada rodada (aceitando letras maiúsculas ou minúsculas, além de `0` caso o jogador queira encerrar antes do fim).
-- **Processamento:**
-  1. Sorteio de uma palavra secreta a partir de uma lista interna de palavras de 5 letras.
-  2. Verificação da entrada: confere se tem exatamente 5 caracteres, se todos são letras de `A` a `Z`, converte minúsculas em maiúsculas e recusa entradas inválidas sem descontar tentativas do jogador.
-  3. Comparação entre o palpite e a palavra secreta em duas etapas para lidar corretamente com letras repetidas: primeiro marca as letras que já estão na posição exata e depois verifica, entre as letras que sobraram, quais existem em outra posição.
-  4. Armazenamento da jogada no histórico da partida e controle do limite de 6 rodadas.
-- **Saídas:** Texto do tutorial (quando solicitado), painel de tentativas acumuladas em texto (`[X]` para posição certa, `(X)` para letra presente em outra posição e ` . ` para letra ausente), mensagens claras de aviso para entradas inválidas e mensagem final de vitória ou fim de tentativas.
+### Entradas do Usuário
+- Seleção de opções numéricas nos menus via console (`syscall 5`).
+- Teclas musicais ergonômicas (`A S D F G H J K` maiúsculas/minúsculas e `-`/Espaço para pausa) lidas como strings (`syscall 8`) na Composição Contínua e no Modo Teclado Livre.
+- Parâmetros numéricos de configuração: número de repetições `K` para o Modo Loop, posição `1..N` para edição, escolha de instrumento (`1..5`) e velocidade de andamento (`1..3`).
 
-### Exemplo de Uso (Palavra secreta da rodada: `TERMO`)
+### Processamento em MIPS
+- **Gerenciamento Dinâmico da Heap (`syscall 9`):** A cada nova nota inserida, se `tam_sequencia == cap_alocada`, o sistema invoca `syscall 9` com `$a0 = 4` para alocar uma nova palavra contígua na *Heap* (`0x10040000`), incrementa `cap_alocada`, grava o valor MIDI no deslocamento indexado `ptr_sequencia + 4 * N` e incrementa `tam_sequencia`.
+- **Tradução ASCII $\rightarrow$ MIDI:** Normalização de caracteres para maiúsculas e busca linear na tabela de teclas válidas para obter a nota diatônica (`60..72`) ou pausa (`0`).
+- **Reprodução Síncrona, Modo Loop e Equalizador Visual:**
+  Dois laços aninhados (`ciclo = 1..K` e `passo = 0..N-1`) percorrem o vetor dinâmico na *Heap*. Para cada nota ativa (`> 0`), aciona a `syscall 33` e calcula o tamanho da barra ASCII (`(nota - 34) / 2`); para pausas (`0`), invoca `syscall 32` (*Sleep*) e imprime `--- | .`.
+- **Transformações Algorítmicas sobre `N` Notas:**
+  - *Transposição (`+2` / `-2` semitons):* Varredura do índice `0..N-1` na *Heap*, somando o deslocamento apenas nas notas ativas, mantendo pausas em `0` e aplicando saturação (*clamping*) entre `36` e `96`.
+  - *Inversão (Reverse):* Troca *in-place* dos elementos simétricos (`heap_seq[i] <-> heap_seq[N - 1 - i]`).
 
-```text
-Menu: [1] Jogar  [2] Tutorial  [0] Sair
-Opcao: 1
+### Saídas Esperadas
+- Áudio MIDI real emitido pelo sintetizador do MARS.
+- Console atualizado com o total de notas `N`, cifras legíveis e barras horizontais `#` sincronizadas no console.
+- Mensagens explicativas de validação de dados em caso de entradas incorretas.
 
-Tentativa 1/6 (ou 0 para sair): sol
-Aviso: digite exatamente 5 letras. A tentativa nao foi descontada.
-
-Tentativa 1/6 (ou 0 para sair): morro
-[1/6] MORRO -> (M)  .  [R]  .  [O]
-
-Tentativa 2/6 (ou 0 para sair): termo
-[1/6] MORRO -> (M)  .  [R]  .  [O]
-[2/6] TERMO -> [T] [E] [R] [M] [O]
-
-Parabens! Voce descobriu a palavra em 2/6 tentativas!
-```
-
----
-
-## 4. Como os Requisitos de MIPS Serão Incorporados
-
-- **Vetores, matrizes e strings:** Um banco de cerca de 200 palavras de 5 letras será armazenado na memória de dados, junto com estruturas para guardar a palavra secreta da rodada e o histórico das até 6 tentativas e seus resultados.
-- **Decisões e repetições:** Laços e desvios condicionais controlarão o menu, o limite de 6 tentativas, a varredura caractere a caractere na validação da entrada e a lógica de comparação de letras (incluindo o tratamento de letras repetidas).
-- **Procedimentos, registradores e pilha:** O código será dividido em procedimentos curtos e bem definidos (exibição de menu/tutorial, sorteio da palavra, leitura e validação, avaliação da tentativa, gravação e impressão do histórico), passando parâmetros e retornos pelos registradores adequados e usando a pilha (`$sp`) para preservar endereços de retorno e registradores em chamadas aninhadas.
-- **Tratamento de erros e encerramento:** Opções inexistentes no menu ou palpites vazios, curtos, longos ou com números/símbolos serão barrados com aviso amigável sem gastar rodada, e a opção `0` permitirá encerrar o programa de forma limpa a qualquer momento.
+### Exemplo Rápido de Uso
+1. O usuário seleciona `[6] Carregar Demo Pronta` $\rightarrow$ opção `2` (*Demo 2: Brilha Estrelinha / Riff Synth*, carregando 8 notas na *Heap* com pausa).
+2. Seleciona `[2] Compor / Editar Faixa` $\rightarrow$ `[1] Composição Contínua`, digita `jk` e pressiona `ENTER`. O sistema aloca mais duas notas dinamicamente na *Heap* via `syscall 9`, expandindo a faixa para `N = 10` notas. Digita `0` para retornar ao menu.
+3. Seleciona `[5] Efeitos de Estúdio` $\rightarrow$ `[3] Inverter Melodia (Reverse)`, revertendo a sequência de 10 notas *in-place*.
+4. Seleciona `[1] Tocar faixa (PLAY / Loop)` $\rightarrow$ informa `2` repetições para o **Modo Loop**, ouvindo a música repetir duas vezes consecutivas acompanhada do equalizador visual no console.
+5. Digita `0` para sair de forma limpa.
 
 ---
 
-## 5. Escopo Mínimo, Divisão Inicial de Tarefas e Link do GitHub
+## 4. Como os Requisitos Técnicos de MIPS Serão Incorporados
 
-- **Escopo mínimo (MVP):** Jogo completo em texto no console do MARS com menu (`Jogar`, `Tutorial` e `Sair`), palavras de 5 letras sem acento, até 6 tentativas, banco interno de ~200 palavras com sorteio (e uma constante interna configurável no código para fixar a palavra durante os testes reproduzíveis), validação de entradas, regra explícita para letras repetidas e exibição do histórico da partida. *(Ideias extras, como exibir um painel das letras do alfabeto já testadas ou ler palavras de arquivo `.txt`, ficam apenas como extensões opcionais se sobrar tempo).*
-- **Divisão inicial de tarefas (dividida em 5 frentes entre os integrantes):**
-  1. **Parte 1:** Menu principal (`Jogar`, `Tutorial`, `Sair`), organização dos dados em memória, banco de palavras e sorteio.
-  2. **Parte 2:** Leitura pelo teclado, conversão de minúsculas para maiúsculas e validação de entradas inválidas.
-  3. **Parte 3:** Lógica de comparação das palavras e regra em duas etapas para letras repetidas.
-  4. **Parte 4:** Armazenamento do histórico de jogadas, exibição do tabuleiro no console e condições de vitória/derrota.
-  5. **Parte 5:** Bateria de testes reproduzíveis no MARS, documentação (`ficha-tecnica.md`, `testes.md`, `uso-ia.md`), gravação do vídeo e revisão conjunta de todo o código para a prova individual.
-- **Link do repositório no GitHub:** `https://github.com/brenoprato/termips`
+| Requisito Técnico (Seção 3) | Incorporação no SynthMIPS |
+| :--- | :--- |
+| **Decisões e repetições com função real** | Laços aninhados no Modo Loop (`1..K` e `0..N-1`), laços de varredura dinâmica na *Heap*, geração de barras `#`, despacho de opções e validações de limites. |
+| **Alocação dinâmica na Heap (`syscall 9`) e vetores** | Alocação contígua nota a nota na *Heap* (`0x10040000`) via `syscall 9` (*sbrk*), variáveis de controle `ptr_sequencia`, `tam_sequencia`, `cap_alocada`, demos estáticas em `.data`, tabelas de tradução e buffers de entrada. |
+| **Modularização em procedimentos claros** | Mais de 10 procedimentos estruturados: `main`, `exibir_painel`, `imprimir_nome_nota`, `adicionar_nota_heap`, `tocar_nota_unica`, `tocar_sequencia`, `desenhar_barra_nota`, `traduzir_tecla`, `compor_faixa`, `modo_teclado_livre`, `configurar_estudio`, `aplicar_transposicao`, `inverter_sequencia`, `carregar_demo`. |
+| **Parâmetros, retornos e preservação** | Passagem formal de argumentos via `$a0..$a3`, retornos em `$v0..$v1` e preservação consistente de `$s0..$s6` e `$ra`. |
+| **Uso justificado da pilha (`$sp`)** | Todos os procedimentos não-folha salvam `$ra` e os registradores salvos `$s*` em quadros dedicados na pilha (`$sp`), suportando chamadas aninhadas profundas (`main` $\rightarrow$ `tocar_sequencia` $\rightarrow$ `tocar_nota_unica` $\rightarrow$ `desenhar_barra_nota` $\rightarrow$ `imprimir_nome_nota`). |
+| **Tratamento de entradas inválidas e encerramento** | Validação de opções do menu (`0..6`), validação de repetições do loop (`K >= 1`), validação de índices de edição (`1..N`), proteção contra operações em faixa vazia (`N == 0`), rejeição de teclas inválidas e saída via `syscall 10`. |
+| **Complexidade mínima ($\ge$ 100 linhas úteis)** | O código-fonte em `src/synthmips.asm` conta com mais de **330 instruções MIPS úteis** (desconsiderando comentários, rótulos e diretivas de montagem). |
+
+---
+
+## 5. Escopo Mínimo e Divisão Inicial de Tarefas (5 Frentes)
+
+Para garantir distribuição equilibrada do trabalho entre os 5 integrantes e assegurar que todos dominem a totalidade da arquitetura para a prova individual, o desenvolvimento é organizado em **5 frentes funcionais independentes de nomes fixos**:
+
+- **Frente 1 — Gerenciador da Heap, Estruturas de Dados e Painel Visual:**
+  Modelagem do crescimento dinâmico na *Heap* (`syscall 9`), variáveis `ptr_sequencia`, `tam_sequencia`, `cap_alocada`, laço principal `main`, validação de menu e procedimentos `exibir_painel` e `imprimir_nome_nota`.
+- **Frente 2 — Motor MIDI Síncrono, Modo Loop e Equalizador Visual:**
+  Implementação de `tocar_sequencia` com suporte a Modo Loop (`K` repetições sobre `N` notas), `tocar_nota_unica` e `desenhar_barra_nota`, com gerenciamento rigoroso do quadro de pilha (`$sp`).
+- **Frente 3 — Mapeamento Ergonômico, Composição Contínua e Teclado Livre:**
+  Implementação de `traduzir_tecla` (mapeamento `A S D F G H J K` e `-`), `compor_faixa` (composição contínua que expande a Heap sob demanda, edição pontual `1..N`, Undo e Clear) e `modo_teclado_livre` com gravação opcional na Heap.
+- **Frente 4 — Efeitos de Estúdio sobre Vetor Dinâmico e Configuração:**
+  Implementação de `aplicar_transposicao` (preservação de pausas `0` e *clamping* `36..96`), `inverter_sequencia` (*swap in-place* sobre `N` notas), `configurar_estudio` e `carregar_demo`.
+- **Frente 5 — Testes Reproduzíveis, Documentação Técnica e Roteiro de Demonstração:**
+  Execução e validação dos 3 casos de teste determinísticos em `docs/testes.md`, rastreamento manual de registradores (*trace*), consolidação técnica de `docs/ficha-tecnica.md`, documentação de IA em `docs/uso-ia.md` e preparação para a avaliação individual.
