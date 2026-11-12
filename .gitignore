@@ -1,0 +1,10 @@
+# Especificações internas e enunciado local (mantém o repositório apenas com README.md, src/ e docs/)
+.kiro/
+CRIATHON_MIPS_Enunciado.md
+
+# Arquivos temporários de sistema e editores
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
